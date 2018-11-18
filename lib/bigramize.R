@@ -1,11 +1,13 @@
-##############################################################
-##############################################################
-##############################################################
+###########################################################
+### Construnc positional binary lists of letter bigrams ###
+###########################################################
 
 ### Authors: Hongru Liu
 ### Project 4 Group 6
 
-
+### Construct letter bigrams for a singel word
+### input: a single word
+### output: a list with nested lists contains positional letter bigrams
 bigramize_word <- function(word) {
   results <- list()
   n <- nchar(word)
@@ -22,12 +24,18 @@ bigramize_word <- function(word) {
   return(results)
 }
 
+### Construct letter bigrams for more than one words
+### input: more than one words
+### output: a list with nested lists contains positional letter bigrams
 bigramize_words <- function(words) {
   results <- sapply(words,bigramize_word)
   results <- apply(results,1,unlist)
   return(t(results))
 }
 
+### Construct letter bigrams for one or more words
+### input: one or more words
+### output: a list with nested lists contains positional letter bigrams
 bigramize <- function(words) {
   cat("new length \n")
   l <- nchar(words[1])
