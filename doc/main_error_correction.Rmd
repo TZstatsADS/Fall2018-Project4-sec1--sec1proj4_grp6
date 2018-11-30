@@ -76,27 +76,27 @@ coun("great",ground_truth_words_cleaned)
 ## 3. Count the frequency of each letter (a-z) in the ground truth
 
 ```{r}
-# letter_count <- lapply(letters,coun,ground_truth_words_cleaned)
-# names(letter_count) <- letters
-load("../output/letter_count.Rdata")
+letter_count <- lapply(letters,coun,ground_truth_words_cleaned)
+names(letter_count) <- letters
+# load("../output/letter_count.Rdata")
 ```
 
 ## 4. Count the frequency of ifferent combine of letters
 
 ```{r}
-# combine <- rep(0,676)
-# dim(combine) <- c(26,26)
-# combine <- data.frame(combine)
-# rownames(combine) <- letters
-# colnames(combine) <- letters
-# combine_count <- combine
-# for (i in letters){
-#   for(j in letters){
-#    combine[i,j]<- paste0(i,j)
-#    combine_count[i,j]<-coun(combine[i,j],ground_truth_words_cleaned)
-#   }
-# }
-load("../output/combine_count.Rdata")
+combine <- rep(0,676)
+dim(combine) <- c(26,26)
+combine <- data.frame(combine)
+rownames(combine) <- letters
+colnames(combine) <- letters
+combine_count <- combine
+for (i in letters){
+  for(j in letters){
+   combine[i,j]<- paste0(i,j)
+   combine_count[i,j]<-coun(combine[i,j],ground_truth_words_cleaned)
+  }
+}
+# load("../output/combine_count.Rdata")
 ```
 
 ## 4. Error correction
@@ -130,7 +130,7 @@ names(Left)<-errors
 Right<-t[which(error_label==TRUE)+1]
 names(Right)<-errors
 
-# corrected_ts <- lapply(errors, Correct, ground_truth_words_cleaned)
+corrected_ts <- lapply(errors, Correct, ground_truth_words_cleaned)
 
 # errors_part1 <- errors[1:(length(errors)/3)]
 # errors_part2 <- errors[((length(errors)/3)+1):(length(errors)*2/3)]
@@ -147,7 +147,8 @@ names(Right)<-errors
 # corrected_ts <- c(corrected_ts_part1,corrected_ts_part2,corrected_ts_part3)
 # save(corrected_ts,file="../output/corrected_ts.Rdata")
 
-load("../output/corrected_ts.Rdata")
+# load("../output/corrected_ts.Rdata")
+
 corrected_ts_MLE <- names(unlist(lapply(lapply(corrected_ts,"[[",1),"[",1)))
 corrected_ts_ELE <- names(unlist(lapply(lapply(corrected_ts,"[[",2),"[",1)))
 ### View ten results of correction
