@@ -1,0 +1,184 @@
+
+---
+title: "Error Correction"
+author: "Yang Xing yx2416 and Hongru Liu hl3148"
+date: "11/25/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 0. Load libraries, source customized functions, load needed output files
+
+```{r}
+# Please change the working directory to the folder containing this Rmd file.
+setwd("/Users/hongru/Documents/GitHub/Fall2018-Project4-sec1proj4_grp6/Github/doc/")
+
+if(!require("tm")){
+  install.packages("tm")
+}
+if(!require("purrr")){
+  install.packages("purrr")
+}
+if(!require("stringr")){
+  install.packages("stringr")
+}
+library(tm)
+library(purrr)
+library(stringr)
+
+source("../lib/get_text.R")
+source("../lib/correction_function.R")
+
+load("../output/ground_truth_words_cleaned.Rdata")
+load("../output/ground_truth_onelines.Rdata")
+load("../output/ground_truth_table.Rdata")
+load("../output/tesseract_labels.Rdata")
+load("../output/tesseract_words_cleaned.Rdata")
+```
+
+## 1. Import Confusion Matrix
+
+```{r}
+sub <- read.csv("../data/sub_matrix.csv")
+rownames(sub)<-sub[,1]
+sub<-sub[,-1]
+rev <- read.csv("../data/rev_matrix.csv")
+rownames(rev)<-rev[,1]
+rev<-rev[,-1]
+del <- read.csv("../data/del_matrix.csv")
+rownames(del)<-del[,1]
+del<-del[,-1]
+add <- read.csv("../data/add_matrix.csv")
+rownames(add)<-add[,1]
+add<-add[,-1]
+```
+
+## 2.Example of correction function
+
+```{r}
+strip.text("$Don't#0125adb")
+Transpositions("yes")
+Deletes("yes")
+Insertions("yes")
+Replaces("yes")
+Neighbors('yes')
+  length(Neighbors('yes'))
+Neighbors_clean('yes',ground_truth_table)
+Clean(Insertions("yes"))
+Probability_MLE("great",ground_truth_words_cleaned)
+Probability_ELE("great",ground_truth_words_cleaned)
+coun("great",ground_truth_words_cleaned)
+```
+
+## 3. Count the frequency of each letter (a-z) in the ground truth
+
+```{r}
+# letter_count <- lapply(letters,coun,ground_truth_words_cleaned)
+# names(letter_count) <- letters
+load("../output/letter_count.Rdata")
+```
+
+## 4. Count the frequency of ifferent combine of letters
+
+```{r}
+# combine <- rep(0,676)
+# dim(combine) <- c(26,26)
+# combine <- data.frame(combine)
+# rownames(combine) <- letters
+# colnames(combine) <- letters
+# combine_count <- combine
+# for (i in letters){
+#   for(j in letters){
+#    combine[i,j]<- paste0(i,j)
+#    combine_count[i,j]<-coun(combine[i,j],ground_truth_words_cleaned)
+#   }
+# }
+load("../output/combine_count.Rdata")
+```
+
+## 4. Error correction
+
+### 4.1 Example of functions
+```{r}
+p_tc_sub("access")
+p_tc_ins("acess")
+p_tc_del("acress")
+p_tc_tran("acess")
+candidates("yaung")
+Correct("yaung")
+```
+
+### 4.2 Find correction candidates using both MLE and ELE with Context
+
+```{r}
+errors <- list()
+for (i in 1:length(tesseract_labels)) {
+  errors[[i]] <- names(tesseract_labels[[i]])[tesseract_labels[[i]]==1]
+}
+errors <- unlist(unlist(errors))
+
+error_label<-unlist(unlist(tesseract_labels))
+t<-unlist(unlist(tesseract_words_cleaned))
+g<-paste0(unlist(unlist(ground_truth_words_cleaned)),collapse = " ")
+
+Left<-0
+Left<-append(Left,t[which(error_label==TRUE)-1])
+names(Left)<-errors
+Right<-t[which(error_label==TRUE)+1]
+names(Right)<-errors
+
+# corrected_ts <- lapply(errors, Correct, ground_truth_words_cleaned)
+
+# errors_part1 <- errors[1:(length(errors)/3)]
+# errors_part2 <- errors[((length(errors)/3)+1):(length(errors)*2/3)]
+# errors_part3 <- errors[((length(errors)*2/3)+1):length(errors)]
+# corrected_ts_part1 <- lapply(errors_part1, Correct, ground_truth_words_cleaned)
+# save(corrected_ts_part1,file="../output/corrected_ts_part1.Rdata")
+# corrected_ts_part2 <- lapply(errors_part2, Correct, ground_truth_words_cleaned)
+# save(corrected_ts_part2,file="../output/corrected_ts_part2.Rdata")
+# corrected_ts_part3 <- lapply(errors_part3, Correct, ground_truth_words_cleaned)
+# save(corrected_ts_part3,file="../output/corrected_ts_part3.Rdata")
+# load("../output/corrected_ts_part1.Rdata")
+# load("../output/corrected_ts_part2.Rdata")
+# load("../output/corrected_ts_part3.Rdata")
+# corrected_ts <- c(corrected_ts_part1,corrected_ts_part2,corrected_ts_part3)
+# save(corrected_ts,file="../output/corrected_ts.Rdata")
+
+load("../output/corrected_ts.Rdata")
+corrected_ts_MLE <- names(unlist(lapply(lapply(corrected_ts,"[[",1),"[",1)))
+corrected_ts_ELE <- names(unlist(lapply(lapply(corrected_ts,"[[",2),"[",1)))
+### View ten results of correction
+cbind(MLE=corrected_ts_MLE[12260:12270],ELE=corrected_ts_ELE[12260:12270])
+```
+
+**As we can notice that, most of corrections of MLE and ELE are same, while the first one is "con" for MLE and "consi" for ELE. Also we can notice that some errors are not correctable by MLE and ELE since there is no proper candidate in the ground truth dictionary. And this is one of the limits of this algrithem.**
+
+### 4.3 Final Correction results
+```{r}
+all_detected_errors <- errors
+corrected_words_MLE <- corrected_ts_MLE[nchar(corrected_ts_MLE)!=0]
+not_corrected_MLE <- errors[nchar(corrected_ts_MLE)==0]
+corrected_words_ELE <- corrected_ts_ELE[nchar(corrected_ts_ELE)!=0]
+not_corrected_ELE <- errors[nchar(corrected_ts_ELE)==0]
+cbind(MLE=corrected_words_MLE[5000:5010],ELE=corrected_words_ELE[5000:5010])
+```
+
+**Note that the second one is difference between MLE and ELE.**
+
+### 5. Save all needed results
+```{r}
+save(letter_count,file="../output/letter_count.Rdata")
+save(combine_count,file="../output/combine_count.Rdata")
+save(corrected_ts,file="../output/corrected_ts.Rdata")
+save(all_detected_errors,corrected_words_MLE,not_corrected_MLE,corrected_words_ELE,not_corrected_ELE,file="../output/correction_results.Rdata")
+```
+
+
+
+
+
+
+

@@ -1,0 +1,86 @@
+---
+title: "Performance"
+author: "Hongru Liu hl3148"
+date: "11/28/2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+## 0. Load needed output files
+
+```{r}
+# Please change the working directory to the folder containing this Rmd file.
+setwd("/Users/hongru/Documents/GitHub/Fall2018-Project4-sec1proj4_grp6/Github/doc/")
+
+if(!require("stringr")){
+  install.packages("stringr")
+}
+library(stringr)
+
+load("../output/tesseract_labels.Rdata")
+load("../output/tesseract_words_cleaned.Rdata")
+load("../output/ground_truth_words_cleaned.Rdata")
+load("../output/correction_results.Rdata")
+```
+
+## 1. Word based performance
+
+```{r}
+nonerrors <- list()
+for (i in 1:length(tesseract_labels)) {
+  nonerrors[[i]] <- names(tesseract_labels[[i]])[tesseract_labels[[i]]==0]
+}
+nonerrors <- unlist(nonerrors)
+ts_words <- unlist(tesseract_words_cleaned)
+gt_words <- ground_truth_words_cleaned
+ts_corrected_MLE <- c(nonerrors,corrected_words_MLE,not_corrected_MLE)
+ts_corrected_ELE <- c(nonerrors,corrected_words_ELE,not_corrected_ELE)
+old_intersect_vec <- vecsets::vintersect(ts_words, gt_words)
+new_intersect_vec_MLE <- vecsets::vintersect(ts_corrected_MLE, gt_words)
+new_intersect_vec_ELE <- vecsets::vintersect(ts_corrected_ELE, gt_words)
+
+OCR_performance_table <- data.frame("Tesseract" = rep(NA,4),
+                                    "Tesseract_with_postprocessing_MLE" = rep(NA,4),
+                                    "Tesseract_with_postprocessing_ELE" = rep(NA,4))
+row.names(OCR_performance_table) <- c("word_wise_recall","word_wise_precision",
+                                      "character_wise_recall","character_wise_precision")
+OCR_performance_table["word_wise_recall","Tesseract"] <- length(old_intersect_vec)/length(gt_words)
+OCR_performance_table["word_wise_precision","Tesseract"] <- length(old_intersect_vec)/length(ts_words)
+OCR_performance_table["word_wise_recall","Tesseract_with_postprocessing_MLE"] <- length(new_intersect_vec_MLE)/length(gt_words)
+OCR_performance_table["word_wise_precision","Tesseract_with_postprocessing_MLE"] <- length(new_intersect_vec_MLE)/length(ts_corrected_MLE)
+OCR_performance_table["word_wise_recall","Tesseract_with_postprocessing_ELE"] <- length(new_intersect_vec_ELE)/length(gt_words)
+OCR_performance_table["word_wise_precision","Tesseract_with_postprocessing_ELE"] <- length(new_intersect_vec_ELE)/length(ts_corrected_ELE)
+
+OCR_performance_table
+```
+
+## 2. Character based performance
+
+```{r}
+ts_char <- unlist(str_split(paste(str_split(ts_words," "), collapse = ""),""))
+gt_char <- unlist(str_split(paste(str_split(gt_words," "), collapse = ""),""))
+ts_corrected_MLE_char <- unlist(str_split(paste(str_split(ts_corrected_MLE," "), collapse = ""),""))
+ts_corrected_ELE_char <- unlist(str_split(paste(str_split(ts_corrected_ELE," "), collapse = ""),""))
+old_intersect_char <- vecsets::vintersect(ts_char, gt_char)
+new_intersect_MLE_char <- vecsets::vintersect(ts_corrected_MLE_char, gt_char)
+new_intersect_ELE_char <- vecsets::vintersect(ts_corrected_ELE_char, gt_char)
+
+OCR_performance_table["character_wise_recall","Tesseract"] <- length(old_intersect_char)/length(gt_char)
+OCR_performance_table["character_wise_precision","Tesseract"] <- length(old_intersect_char)/length(ts_char)
+OCR_performance_table["character_wise_recall","Tesseract_with_postprocessing_MLE"] <- length(new_intersect_MLE_char)/length(gt_char)
+OCR_performance_table["character_wise_precision","Tesseract_with_postprocessing_MLE"] <- length(new_intersect_MLE_char)/length(ts_corrected_MLE_char)
+OCR_performance_table["character_wise_recall","Tesseract_with_postprocessing_ELE"] <- length(new_intersect_ELE_char)/length(gt_char)
+OCR_performance_table["character_wise_precision","Tesseract_with_postprocessing_ELE"] <- length(new_intersect_ELE_char)/length(ts_corrected_ELE_char)
+
+OCR_performance_table
+```
+
+## 3. Save needed results
+```{r}
+save(OCR_performance_table,file="../output/OCR_performance_table.Rdata")
+```
+
+
+

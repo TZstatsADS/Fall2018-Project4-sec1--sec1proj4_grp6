@@ -1,0 +1,133 @@
+---
+title: "Project 4 - Error Detection"
+author: "Hongru Liu hl3148"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  html_notebook: default
+---
+
+## Step 0: environment setting
+
+### Load libraries, source customized functions
+
+```{r}
+# Please change the working directory to the folder containing this Rmd file.
+setwd("/Users/hongru/Documents/GitHub/Fall2018-Project4-sec1proj4_grp6/Github/doc")
+
+if(!require("tm")){
+  install.packages("tm")
+}
+if(!require("qdap")){
+  install.packages("qdap")
+}
+if(!require("purrr")){
+  install.packages("purrr")
+}
+library(tm) # VCorpus
+library(qdap) # clean
+library(purrr)
+
+source("../lib/get_text.R")
+source("../lib/bigramize.R")
+source("../lib/make_label.R")
+```
+
+## Step 1: construct a positional binary matrix using ground truth texts
+
+### 1.1 Read the ground truth text from files.
+
+```{r}
+ground_truth_dir <-"../data/ground_truth"
+ground_truth_file_name <- list.files(ground_truth_dir)
+ground_truth_file_path <- paste0(ground_truth_dir,'/',ground_truth_file_name)
+ground_truth_onelines <- lapply(ground_truth_file_path,get_text)
+```
+
+### 1.2 Clean the ground truth texts, convert them to words and sort the words by letter length.
+
+*Clean the text by removing all numbers, punctuations, special symbols. Only letters are retained*
+
+```{r}
+ground_truth_words_cleaned <- unlist(lapply(ground_truth_onelines,clean_text))
+ground_truth_by_length <- sort_by_length(ground_truth_words_cleaned)
+ground_truth_table <- table(ground_truth_words_cleaned)
+### View 10 words of ground trurh dictionary
+tail(head(ground_truth_table,100),10)
+```
+
+### 1.3 Construct letter bigrams for the ground truth words
+
+*Note that for the final result, we construct a positional binary list of letter bigrams instead of a matrix. But the former one could be used in the same way as the latter one.*
+
+```{r}
+### Construct letter bigrams for the words having length >= 3
+num_len <- length(ground_truth_by_length)
+ground_truth_bigram_from3 <- lapply(ground_truth_by_length[3:num_len],bigramize)
+### include words having length <= 2
+ground_truth_bigram <- c(list(l_1=list(PD_1=ground_truth_by_length[[1]]),
+                              l_2=list(PD_1_2=ground_truth_by_length[[2]])),
+                         ground_truth_bigram_from3)
+### romove duplicate bigrams
+ground_truth_unibig <- lapply(ground_truth_bigram,unique_bigram) ### this is the final bigram list for error detection
+### View the bigram matrix of 4-letter length words of ground truth
+lapply(ground_truth_unibig[[4]],head)
+### calculate the number of bigrams
+sum(unlist((lapply(ground_truth_unibig,function(x) {lapply(x,length)}))))
+```
+
+## Step 2: construct a word list using tesseract texts
+
+### 2.1 Read the tesseract text from files.
+
+```{r}
+tesseract_dir <- "../data/tesseract"
+tesseract_file_name <- list.files(tesseract_dir)
+tesseract_file_path <- paste0(tesseract_dir,'/',tesseract_file_name)
+tesseract_onelines <- lapply(tesseract_file_path,get_text)
+```
+
+### 2.2 Clean the tesseract texts, convert them to words.
+
+```{r}
+tesseract_words_cleaned <- lapply(tesseract_onelines,clean_text)
+### View the first six words of first five tesseract files
+lapply(tesseract_words_cleaned[1:5],head)
+```
+
+## Step 3: error detection
+
+### 3.1 Construct a label list that indicates whether a word in the given string is an error. 
+
+`label = 1` means the corresponding word is an error and `label = 0` means the word is not an error
+
+```{r}
+tesseract_labels <- make_label(tesseract_words_cleaned,ground_truth_unibig)
+### change names of label lists
+names(tesseract_labels) <- ground_truth_file_name
+for (i in 1:length(tesseract_labels)) {
+  names(tesseract_labels[[i]]) <- unlist(strsplit(tesseract_words_cleaned[[i]]," "))
+}
+### View the first 10 words' labels of first five tesseract files
+lapply(tesseract_labels[1:5],head)
+```
+
+### 3.2 Preliminary result analysis
+
+```{r}
+error_rate <- (sapply(tesseract_labels, sum)/sapply(tesseract_words_cleaned, length))
+summary(error_rate)
+```
+
+## Step 4: save needed results
+
+```{r}
+save(ground_truth_onelines,file="../output/ground_truth_onelines.Rdata")
+save(ground_truth_words_cleaned,file="../output/ground_truth_words_cleaned.Rdata")
+save(ground_truth_table,file="../output/ground_truth_table.Rdata")
+save(ground_truth_unibig,file="../output/ground_truth_unibig.Rdata")
+save(tesseract_words_cleaned,file="../output/tesseract_words_cleaned.Rdata")
+save(tesseract_labels,file="../output/tesseract_labels.Rdata")
+```
+
