@@ -19,7 +19,12 @@ Error detection is performed by comparing all possible bigrams of all words in T
 Error correction is performed by using Baysian probability to find the correction type with highest prior probability multiplied by probability of it being a typo given the correction. Different methods of estimations such as MLE and ELE are performed. 
 Performance evaluation is to compare the correction accuracy of different methods of estimations by calculating the proportion of errors before and after correction.
 	
-**Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
+[**Contribution statement**](doc/a_note_on_contributions.md)): All team members approve our work presented in this GitHub repository including this contributions statement. 
+
+	+ Hongru Liu: Error detection using paper D2 and performence evaluation
+	+ Chuqiao Rong: Error correction using papaer C4
+	+ Yang Xing: Error correction using papaer C4
+	+ Yi Lin: README files and presentation slides
 
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
