@@ -21,10 +21,10 @@ Performance evaluation is to compare the correction accuracy of different method
 	
 [**Contribution statement**](doc/a_note_on_contributions.md): All team members approve our work presented in this GitHub repository including this contributions statement. The contribution for each team member is following:
 
-	+ Hongru Liu: Error detection using paper D2, performence evaluation, and update the presentation slides
+	+ Hongru Liu: Error detection using paper D2, Error detection using paper C4, performence evaluation, and update the presentation slides
 	+ Chuqiao Rong: Error correction using papaer C4
 	+ Yang Xing: Error correction using papaer C4
-	+ Yi Lin: write README files and prepare the presentation slides
+	+ Yi Lin: Error correction using papaer C4, write README files and prepare the presentation slides
 
 Following [suggestions](http://nicercode.github.io/blog/2013-04-05-projects/) by [RICH FITZJOHN](http://nicercode.github.io/about/#Team) (@richfitz). This folder is orgarnized as follows.
 
