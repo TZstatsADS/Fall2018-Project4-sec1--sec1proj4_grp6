@@ -76,32 +76,32 @@ coun("great",ground_truth_words_cleaned)
 ## 3. Count the frequency of each letter (a-z) in the ground truth
 
 ```{r}
-letter_count <- lapply(letters,coun,ground_truth_words_cleaned)
-names(letter_count) <- letters
-# load("../output/letter_count.Rdata")
+#letter_count <- lapply(letters,coun,ground_truth_words_cleaned)
+#names(letter_count) <- letters
+load("../output/letter_count.Rdata")
 ```
 
-## 4. Count the frequency of ifferent combine of letters
+## 4. Count the frequency of different combine of letters
 
 ```{r}
-combine <- rep(0,676)
-dim(combine) <- c(26,26)
-combine <- data.frame(combine)
-rownames(combine) <- letters
-colnames(combine) <- letters
-combine_count <- combine
-for (i in letters){
-  for(j in letters){
-   combine[i,j]<- paste0(i,j)
-   combine_count[i,j]<-coun(combine[i,j],ground_truth_words_cleaned)
-  }
-}
-# load("../output/combine_count.Rdata")
+# combine <- rep(0,676)
+# dim(combine) <- c(26,26)
+# combine <- data.frame(combine)
+# rownames(combine) <- letters
+# colnames(combine) <- letters
+# combine_count <- combine
+# for (i in letters){
+#   for(j in letters){
+#    combine[i,j]<- paste0(i,j)
+#    combine_count[i,j]<-coun(combine[i,j],ground_truth_words_cleaned)
+#   }
+# }
+load("../output/combine_count.Rdata")
 ```
 
-## 4. Error correction
+## 5 Error correction
 
-### 4.1 Example of functions
+### 5.1 Example of functions
 ```{r}
 p_tc_sub("access")
 p_tc_ins("acess")
@@ -111,7 +111,7 @@ candidates("yaung")
 Correct("yaung")
 ```
 
-### 4.2 Find correction candidates using both MLE and ELE with Context
+### 5.2 Find correction candidates using both MLE and ELE without Context
 
 ```{r}
 errors <- list()
@@ -120,6 +120,25 @@ for (i in 1:length(tesseract_labels)) {
 }
 errors <- unlist(unlist(errors))
 
+# corrected_ts <- lapply(errors, Correct, ground_truth_words_cleaned)
+load("../output/corrected_ts.Rdata")
+
+corrected_ts_MLE <- names(unlist(lapply(lapply(corrected_ts,"[[",1),"[",1)))
+corrected_ts_ELE <- names(unlist(lapply(lapply(corrected_ts,"[[",2),"[",1)))
+all_detected_errors <- errors
+corrected_words_MLE <- corrected_ts_MLE[nchar(corrected_ts_MLE)!=0]
+not_corrected_MLE <- errors[nchar(corrected_ts_MLE)==0]
+corrected_words_ELE <- corrected_ts_ELE[nchar(corrected_ts_ELE)!=0]
+not_corrected_ELE <- errors[nchar(corrected_ts_ELE)==0]
+sapply(list(corrected_MLE=corrected_words_MLE,
+            not_corrected_MLE=not_corrected_MLE,
+            corrected_ELE=corrected_words_ELE,
+            not_corrected_ELE=not_corrected_ELE),head,10)
+```
+
+### 5.3 Error Correction using both MLE and ELE with Context
+
+```{r}
 error_label<-unlist(unlist(tesseract_labels))
 t<-unlist(unlist(tesseract_words_cleaned))
 g<-paste0(unlist(unlist(ground_truth_words_cleaned)),collapse = " ")
@@ -130,51 +149,30 @@ names(Left)<-errors
 Right<-t[which(error_label==TRUE)+1]
 names(Right)<-errors
 
-corrected_ts <- lapply(errors, Correct, ground_truth_words_cleaned)
+# corrected_context <- lapply(1:50916,Correct_c4)
+load("../output/corrected_context.Rdata")
 
-# errors_part1 <- errors[1:(length(errors)/3)]
-# errors_part2 <- errors[((length(errors)/3)+1):(length(errors)*2/3)]
-# errors_part3 <- errors[((length(errors)*2/3)+1):length(errors)]
-# corrected_ts_part1 <- lapply(errors_part1, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part1,file="../output/corrected_ts_part1.Rdata")
-# corrected_ts_part2 <- lapply(errors_part2, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part2,file="../output/corrected_ts_part2.Rdata")
-# corrected_ts_part3 <- lapply(errors_part3, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part3,file="../output/corrected_ts_part3.Rdata")
-# load("../output/corrected_ts_part1.Rdata")
-# load("../output/corrected_ts_part2.Rdata")
-# load("../output/corrected_ts_part3.Rdata")
-# corrected_ts <- c(corrected_ts_part1,corrected_ts_part2,corrected_ts_part3)
-# save(corrected_ts,file="../output/corrected_ts.Rdata")
-
-# load("../output/corrected_ts.Rdata")
-
-corrected_ts_MLE <- names(unlist(lapply(lapply(corrected_ts,"[[",1),"[",1)))
-corrected_ts_ELE <- names(unlist(lapply(lapply(corrected_ts,"[[",2),"[",1)))
-### View ten results of correction
-cbind(MLE=corrected_ts_MLE[12260:12270],ELE=corrected_ts_ELE[12260:12270])
+corrected_context_candi_MLE <- lapply(corrected_context,"[[",2)
+corrected_context_candi_ELE <- lapply(corrected_context,"[[",3)
+corrected_context_word_MLE <- unlist(lapply(corrected_context_candi_MLE,names)[!sapply(corrected_context_candi_MLE,is.null)])
+not_corrected_context_MLE <- errors[sapply(corrected_context,is.null)]
+corrected_context_word_ELE <- unlist(lapply(corrected_context_candi_ELE,names)[!sapply(corrected_context_candi_ELE,is.null)])
+not_corrected_context_ELE <- errors[sapply(corrected_context,is.null)]
+### View the corrrection results
+sapply(list(corrected_MLE=corrected_context_word_MLE,
+            not_corrected_MLE=not_corrected_context_MLE,
+            corrected_ELE=corrected_context_word_ELE,
+            not_corrected_ELE=not_corrected_context_ELE),head,10)
 ```
 
-**As we can notice that, most of corrections of MLE and ELE are same, while the first one is "con" for MLE and "consi" for ELE. Also we can notice that some errors are not correctable by MLE and ELE since there is no proper candidate in the ground truth dictionary. And this is one of the limits of this algrithem.**
-
-### 4.3 Final Correction results
-```{r}
-all_detected_errors <- errors
-corrected_words_MLE <- corrected_ts_MLE[nchar(corrected_ts_MLE)!=0]
-not_corrected_MLE <- errors[nchar(corrected_ts_MLE)==0]
-corrected_words_ELE <- corrected_ts_ELE[nchar(corrected_ts_ELE)!=0]
-not_corrected_ELE <- errors[nchar(corrected_ts_ELE)==0]
-cbind(MLE=corrected_words_MLE[5000:5010],ELE=corrected_words_ELE[5000:5010])
-```
-
-**Note that the second one is difference between MLE and ELE.**
-
-### 5. Save all needed results
+### 6. Save all needed results
 ```{r}
 save(letter_count,file="../output/letter_count.Rdata")
 save(combine_count,file="../output/combine_count.Rdata")
 save(corrected_ts,file="../output/corrected_ts.Rdata")
-save(all_detected_errors,corrected_words_MLE,not_corrected_MLE,corrected_words_ELE,not_corrected_ELE,file="../output/correction_results.Rdata")
+save(corrected_context,file="../output/corrected_context.Rdata")
+save(all_detected_errors,corrected_words_MLE,not_corrected_MLE,corrected_words_ELE,not_corrected_ELE,file="../output/correction_results_without_context.Rdata")
+save(all_detected_errors,corrected_context_word_MLE,not_corrected_context_MLE,corrected_context_word_ELE,not_corrected_context_ELE,file="../output/correction_results_with_context.Rdata")
 ```
 
 

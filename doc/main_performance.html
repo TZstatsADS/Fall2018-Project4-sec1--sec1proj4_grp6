@@ -145,15 +145,18 @@ if(!require(&quot;stringr&quot;)){
 load(&quot;../output/tesseract_labels.Rdata&quot;)
 load(&quot;../output/tesseract_words_cleaned.Rdata&quot;)
 load(&quot;../output/ground_truth_words_cleaned.Rdata&quot;)
-load(&quot;../output/correction_results.Rdata&quot;)</code></pre>
+load(&quot;../output/correction_results.Rdata&quot;)
+load(&quot;../output/correction_results_with_context.Rdata&quot;)</code></pre>
 </div>
-<div id="word-based-performance" class="section level2">
-<h2>1. Word based performance</h2>
+<div id="performance-without-context" class="section level2">
+<h2>1. Performance without context</h2>
 <pre class="r"><code>nonerrors &lt;- list()
 for (i in 1:length(tesseract_labels)) {
   nonerrors[[i]] &lt;- names(tesseract_labels[[i]])[tesseract_labels[[i]]==0]
 }
 nonerrors &lt;- unlist(nonerrors)
+
+## word
 ts_words &lt;- unlist(tesseract_words_cleaned)
 gt_words &lt;- ground_truth_words_cleaned
 ts_corrected_MLE &lt;- c(nonerrors,corrected_words_MLE,not_corrected_MLE)
@@ -174,16 +177,8 @@ OCR_performance_table[&quot;word_wise_precision&quot;,&quot;Tesseract_with_postp
 OCR_performance_table[&quot;word_wise_recall&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_vec_ELE)/length(gt_words)
 OCR_performance_table[&quot;word_wise_precision&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_vec_ELE)/length(ts_corrected_ELE)
 
-OCR_performance_table</code></pre>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Tesseract"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Tesseract_with_postprocessing_MLE"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Tesseract_with_postprocessing_ELE"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.6488488","2":"0.7393707","3":"0.7393462","_rn_":"word_wise_recall"},{"1":"0.6544196","2":"0.7457186","3":"0.7456940","_rn_":"word_wise_precision"},{"1":"NA","2":"NA","3":"NA","_rn_":"character_wise_recall"},{"1":"NA","2":"NA","3":"NA","_rn_":"character_wise_precision"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-</div>
-<div id="character-based-performance" class="section level2">
-<h2>2. Character based performance</h2>
-<pre class="r"><code>ts_char &lt;- unlist(str_split(paste(str_split(ts_words,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
+### character
+ts_char &lt;- unlist(str_split(paste(str_split(ts_words,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
 gt_char &lt;- unlist(str_split(paste(str_split(gt_words,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
 ts_corrected_MLE_char &lt;- unlist(str_split(paste(str_split(ts_corrected_MLE,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
 ts_corrected_ELE_char &lt;- unlist(str_split(paste(str_split(ts_corrected_ELE,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
@@ -205,9 +200,50 @@ OCR_performance_table</code></pre>
   </script>
 </div>
 </div>
+<div id="performance-with-context" class="section level2">
+<h2>2. Performance with context</h2>
+<pre class="r"><code>## word
+ts_corrected_MLE_con &lt;- c(nonerrors,corrected_context_word_MLE,not_corrected_context_MLE)
+ts_corrected_ELE_con &lt;- c(nonerrors,corrected_context_word_ELE,not_corrected_context_ELE)
+new_intersect_vec_MLE_con &lt;- vecsets::vintersect(corrected_context_word_MLE, gt_words)
+new_intersect_vec_ELE_con &lt;- vecsets::vintersect(corrected_context_word_ELE, gt_words)
+
+OCR_performance_table2 &lt;- data.frame(&quot;Tesseract&quot; = rep(NA,4),
+                                    &quot;Tesseract_with_postprocessing_MLE&quot; = rep(NA,4),
+                                    &quot;Tesseract_with_postprocessing_ELE&quot; = rep(NA,4))
+row.names(OCR_performance_table2) &lt;- c(&quot;word_wise_recall&quot;,&quot;word_wise_precision&quot;,
+                                      &quot;character_wise_recall&quot;,&quot;character_wise_precision&quot;)
+OCR_performance_table2[&quot;word_wise_recall&quot;,&quot;Tesseract&quot;] &lt;- length(old_intersect_vec)/length(gt_words)
+OCR_performance_table2[&quot;word_wise_precision&quot;,&quot;Tesseract&quot;] &lt;- length(old_intersect_vec)/length(ts_words)
+OCR_performance_table2[&quot;word_wise_recall&quot;,&quot;Tesseract_with_postprocessing_MLE&quot;] &lt;- length(new_intersect_vec_MLE_con)/length(gt_words)
+OCR_performance_table2[&quot;word_wise_precision&quot;,&quot;Tesseract_with_postprocessing_MLE&quot;] &lt;- length(new_intersect_vec_MLE_con)/length(ts_corrected_MLE_con)
+OCR_performance_table2[&quot;word_wise_recall&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_vec_ELE_con)/length(gt_words)
+OCR_performance_table2[&quot;word_wise_precision&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_vec_ELE_con)/length(ts_corrected_ELE_con)
+
+### character
+ts_corrected_MLE_con_char &lt;- unlist(str_split(paste(str_split(ts_corrected_MLE_con,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
+ts_corrected_ELE_con_char &lt;- unlist(str_split(paste(str_split(ts_corrected_ELE_con,&quot; &quot;), collapse = &quot;&quot;),&quot;&quot;))
+new_intersect_MLE_con_char &lt;- vecsets::vintersect(ts_corrected_MLE_con_char, gt_char)
+new_intersect_ELE_con_char &lt;- vecsets::vintersect(ts_corrected_ELE_con_char, gt_char)
+
+OCR_performance_table2[&quot;character_wise_recall&quot;,&quot;Tesseract&quot;] &lt;- length(old_intersect_char)/length(gt_char)
+OCR_performance_table2[&quot;character_wise_precision&quot;,&quot;Tesseract&quot;] &lt;- length(old_intersect_char)/length(ts_char)
+OCR_performance_table2[&quot;character_wise_recall&quot;,&quot;Tesseract_with_postprocessing_MLE&quot;] &lt;- length(new_intersect_MLE_con_char)/length(gt_char)
+OCR_performance_table2[&quot;character_wise_precision&quot;,&quot;Tesseract_with_postprocessing_MLE&quot;] &lt;- length(new_intersect_MLE_con_char)/length(ts_corrected_MLE_con_char)
+OCR_performance_table2[&quot;character_wise_recall&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_ELE_con_char)/length(gt_char)
+OCR_performance_table2[&quot;character_wise_precision&quot;,&quot;Tesseract_with_postprocessing_ELE&quot;] &lt;- length(new_intersect_ELE_con_char)/length(ts_corrected_ELE_con_char)
+
+OCR_performance_table2</code></pre>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Tesseract"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Tesseract_with_postprocessing_MLE"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Tesseract_with_postprocessing_ELE"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.6488488","2":"0.1014580","3":"0.1014580","_rn_":"word_wise_recall"},{"1":"0.6544196","2":"0.1023291","3":"0.1023291","_rn_":"word_wise_precision"},{"1":"0.9093360","2":"0.9264410","3":"0.9264410","_rn_":"character_wise_recall"},{"1":"0.9413257","2":"0.9577173","3":"0.9577173","_rn_":"character_wise_precision"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+</div>
 <div id="save-needed-results" class="section level2">
 <h2>3. Save needed results</h2>
-<pre class="r"><code>save(OCR_performance_table,file=&quot;../output/OCR_performance_table.Rdata&quot;)</code></pre>
+<pre class="r"><code>save(OCR_performance_table,file=&quot;../output/OCR_performance_table.Rdata&quot;)
+save(OCR_performance_table2,file=&quot;../output/OCR_performance_table2.Rdata&quot;)</code></pre>
 </div>
 
 

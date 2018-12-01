@@ -283,12 +283,12 @@ add&lt;-add[,-1]</code></pre>
 </div>
 <div id="count-the-frequency-of-each-letter-a-z-in-the-ground-truth" class="section level2">
 <h2>3. Count the frequency of each letter (a-z) in the ground truth</h2>
-<pre class="r"><code># letter_count &lt;- lapply(letters,coun,ground_truth_words_cleaned)
-# names(letter_count) &lt;- letters
+<pre class="r"><code>#letter_count &lt;- lapply(letters,coun,ground_truth_words_cleaned)
+#names(letter_count) &lt;- letters
 load(&quot;../output/letter_count.Rdata&quot;)</code></pre>
 </div>
-<div id="count-the-frequency-of-ifferent-combine-of-letters" class="section level2">
-<h2>4. Count the frequency of ifferent combine of letters</h2>
+<div id="count-the-frequency-of-different-combine-of-letters" class="section level2">
+<h2>4. Count the frequency of different combine of letters</h2>
 <pre class="r"><code># combine &lt;- rep(0,676)
 # dim(combine) &lt;- c(26,26)
 # combine &lt;- data.frame(combine)
@@ -304,9 +304,9 @@ load(&quot;../output/letter_count.Rdata&quot;)</code></pre>
 load(&quot;../output/combine_count.Rdata&quot;)</code></pre>
 </div>
 <div id="error-correction" class="section level2">
-<h2>4. Error correction</h2>
+<h2>5 Error correction</h2>
 <div id="example-of-functions" class="section level3">
-<h3>4.1 Example of functions</h3>
+<h3>5.1 Example of functions</h3>
 <pre class="r"><code>p_tc_sub(&quot;access&quot;)</code></pre>
 <pre><code>##     access     accass     access     access     access     access 
 ## 0.00000000 0.00300675 0.00000000 0.00000000 0.00000000 0.00000000 
@@ -331,15 +331,43 @@ load(&quot;../output/combine_count.Rdata&quot;)</code></pre>
 ##        young         &lt;NA&gt;         &lt;NA&gt; 
 ## 6.539825e-09           NA           NA</code></pre>
 </div>
-<div id="find-correction-candidates-using-both-mle-and-ele-with-context" class="section level3">
-<h3>4.2 Find correction candidates using both MLE and ELE with Context</h3>
+<div id="find-correction-candidates-using-both-mle-and-ele-without-context" class="section level3">
+<h3>5.2 Find correction candidates using both MLE and ELE without Context</h3>
 <pre class="r"><code>errors &lt;- list()
 for (i in 1:length(tesseract_labels)) {
   errors[[i]] &lt;- names(tesseract_labels[[i]])[tesseract_labels[[i]]==1]
 }
 errors &lt;- unlist(unlist(errors))
 
-error_label&lt;-unlist(unlist(tesseract_labels))
+# corrected_ts &lt;- lapply(errors, Correct, ground_truth_words_cleaned)
+load(&quot;../output/corrected_ts.Rdata&quot;)
+
+corrected_ts_MLE &lt;- names(unlist(lapply(lapply(corrected_ts,&quot;[[&quot;,1),&quot;[&quot;,1)))
+corrected_ts_ELE &lt;- names(unlist(lapply(lapply(corrected_ts,&quot;[[&quot;,2),&quot;[&quot;,1)))
+all_detected_errors &lt;- errors
+corrected_words_MLE &lt;- corrected_ts_MLE[nchar(corrected_ts_MLE)!=0]
+not_corrected_MLE &lt;- errors[nchar(corrected_ts_MLE)==0]
+corrected_words_ELE &lt;- corrected_ts_ELE[nchar(corrected_ts_ELE)!=0]
+not_corrected_ELE &lt;- errors[nchar(corrected_ts_ELE)==0]
+sapply(list(corrected_MLE=corrected_words_MLE,
+            not_corrected_MLE=not_corrected_MLE,
+            corrected_ELE=corrected_words_ELE,
+            not_corrected_ELE=not_corrected_ELE),head,10)</code></pre>
+<pre><code>##       corrected_MLE not_corrected_MLE corrected_ELE not_corrected_ELE
+##  [1,] &quot;rahn&quot;        &quot;xansm&quot;           &quot;rahn&quot;        &quot;xansm&quot;          
+##  [2,] &quot;william&quot;     &quot;nvolvng&quot;         &quot;william&quot;     &quot;nvolvng&quot;        
+##  [3,] &quot;titles&quot;      &quot;orelgn&quot;          &quot;titles&quot;      &quot;orelgn&quot;         
+##  [4,] &quot;legislatlon&quot; &quot;admlnlstratlons&quot; &quot;legislatlon&quot; &quot;admlnlstratlons&quot;
+##  [5,] &quot;wilbur&quot;      &quot;drarkm&quot;          &quot;wilbur&quot;      &quot;drarkm&quot;         
+##  [6,] &quot;banking&quot;     &quot;jurlsdlctlon&quot;    &quot;banking&quot;     &quot;jurlsdlctlon&quot;   
+##  [7,] &quot;cut&quot;         &quot;unmedlately&quot;     &quot;cut&quot;         &quot;unmedlately&quot;    
+##  [8,] &quot;by&quot;          &quot;antlclpated&quot;     &quot;by&quot;          &quot;antlclpated&quot;    
+##  [9,] &quot;titles&quot;      &quot;drganlzed&quot;       &quot;titles&quot;      &quot;drganlzed&quot;      
+## [10,] &quot;my&quot;          &quot;prohlblt&quot;        &quot;my&quot;          &quot;prohlblt&quot;</code></pre>
+</div>
+<div id="error-correction-using-both-mle-and-ele-with-context" class="section level3">
+<h3>5.3 Error Correction using both MLE and ELE with Context</h3>
+<pre class="r"><code>error_label&lt;-unlist(unlist(tesseract_labels))
 t&lt;-unlist(unlist(tesseract_words_cleaned))
 g&lt;-paste0(unlist(unlist(ground_truth_words_cleaned)),collapse = &quot; &quot;)
 
@@ -349,70 +377,40 @@ names(Left)&lt;-errors
 Right&lt;-t[which(error_label==TRUE)+1]
 names(Right)&lt;-errors
 
-# corrected_ts &lt;- lapply(errors, Correct, ground_truth_words_cleaned)
+# corrected_context &lt;- lapply(1:50916,Correct_c4)
+load(&quot;../output/corrected_context.Rdata&quot;)
 
-# errors_part1 &lt;- errors[1:(length(errors)/3)]
-# errors_part2 &lt;- errors[((length(errors)/3)+1):(length(errors)*2/3)]
-# errors_part3 &lt;- errors[((length(errors)*2/3)+1):length(errors)]
-# corrected_ts_part1 &lt;- lapply(errors_part1, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part1,file=&quot;../output/corrected_ts_part1.Rdata&quot;)
-# corrected_ts_part2 &lt;- lapply(errors_part2, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part2,file=&quot;../output/corrected_ts_part2.Rdata&quot;)
-# corrected_ts_part3 &lt;- lapply(errors_part3, Correct, ground_truth_words_cleaned)
-# save(corrected_ts_part3,file=&quot;../output/corrected_ts_part3.Rdata&quot;)
-# load(&quot;../output/corrected_ts_part1.Rdata&quot;)
-# load(&quot;../output/corrected_ts_part2.Rdata&quot;)
-# load(&quot;../output/corrected_ts_part3.Rdata&quot;)
-# corrected_ts &lt;- c(corrected_ts_part1,corrected_ts_part2,corrected_ts_part3)
-# save(corrected_ts,file=&quot;../output/corrected_ts.Rdata&quot;)
-
-load(&quot;../output/corrected_ts.Rdata&quot;)
-corrected_ts_MLE &lt;- names(unlist(lapply(lapply(corrected_ts,&quot;[[&quot;,1),&quot;[&quot;,1)))
-corrected_ts_ELE &lt;- names(unlist(lapply(lapply(corrected_ts,&quot;[[&quot;,2),&quot;[&quot;,1)))
-### View ten results of correction
-cbind(MLE=corrected_ts_MLE[12260:12270],ELE=corrected_ts_ELE[12260:12270])</code></pre>
-<pre><code>##       MLE            ELE           
-##  [1,] &quot;con&quot;          &quot;consi&quot;       
-##  [2,] &quot;&quot;             &quot;&quot;            
-##  [3,] &quot;&quot;             &quot;&quot;            
-##  [4,] &quot;leadership&quot;   &quot;leadership&quot;  
-##  [5,] &quot;posltlons&quot;    &quot;posltlons&quot;   
-##  [6,] &quot;&quot;             &quot;&quot;            
-##  [7,] &quot;allowing&quot;     &quot;allowing&quot;    
-##  [8,] &quot;wm&quot;           &quot;wm&quot;          
-##  [9,] &quot;republican&quot;   &quot;republican&quot;  
-## [10,] &quot;&quot;             &quot;&quot;            
-## [11,] &quot;conservatism&quot; &quot;conservatism&quot;</code></pre>
-<p><strong>As we can notice that, most of corrections of MLE and ELE are same, while the first one is “con” for MLE and “consi” for ELE. Also we can notice that some errors are not correctable by MLE and ELE since there is no proper candidate in the ground truth dictionary. And this is one of the limits of this algrithem.</strong></p>
-</div>
-<div id="final-correction-results" class="section level3">
-<h3>4.3 Final Correction results</h3>
-<pre class="r"><code>all_detected_errors &lt;- errors
-corrected_words_MLE &lt;- corrected_ts_MLE[nchar(corrected_ts_MLE)!=0]
-not_corrected_MLE &lt;- errors[nchar(corrected_ts_MLE)==0]
-corrected_words_ELE &lt;- corrected_ts_ELE[nchar(corrected_ts_ELE)!=0]
-not_corrected_ELE &lt;- errors[nchar(corrected_ts_ELE)==0]
-cbind(MLE=corrected_words_MLE[5000:5010],ELE=corrected_words_ELE[5000:5010])</code></pre>
-<pre><code>##       MLE               ELE              
-##  [1,] &quot;looking&quot;         &quot;looking&quot;        
-##  [2,] &quot;regu&quot;            &quot;regis&quot;          
-##  [3,] &quot;disposal&quot;        &quot;disposal&quot;       
-##  [4,] &quot;carcinogens&quot;     &quot;carcinogens&quot;    
-##  [5,] &quot;acm&quot;             &quot;acm&quot;            
-##  [6,] &quot;believe&quot;         &quot;believe&quot;        
-##  [7,] &quot;important&quot;       &quot;important&quot;      
-##  [8,] &quot;packaging&quot;       &quot;packaging&quot;      
-##  [9,] &quot;transportation&quot;  &quot;transportation&quot; 
-## [10,] &quot;transportations&quot; &quot;transportations&quot;
-## [11,] &quot;two&quot;             &quot;two&quot;</code></pre>
-<p><strong>Note that the second one is difference between MLE and ELE.</strong></p>
+corrected_context_candi_MLE &lt;- lapply(corrected_context,&quot;[[&quot;,2)
+corrected_context_candi_ELE &lt;- lapply(corrected_context,&quot;[[&quot;,3)
+corrected_context_word_MLE &lt;- unlist(lapply(corrected_context_candi_MLE,names)[!sapply(corrected_context_candi_MLE,is.null)])
+not_corrected_context_MLE &lt;- errors[sapply(corrected_context,is.null)]
+corrected_context_word_ELE &lt;- unlist(lapply(corrected_context_candi_ELE,names)[!sapply(corrected_context_candi_ELE,is.null)])
+not_corrected_context_ELE &lt;- errors[sapply(corrected_context,is.null)]
+### View the corrrection results
+sapply(list(corrected_MLE=corrected_context_word_MLE,
+            not_corrected_MLE=not_corrected_context_MLE,
+            corrected_ELE=corrected_context_word_ELE,
+            not_corrected_ELE=not_corrected_context_ELE),head,10)</code></pre>
+<pre><code>##       corrected_MLE not_corrected_MLE corrected_ELE not_corrected_ELE
+##  [1,] &quot;rch&quot;         &quot;xansm&quot;           &quot;rch&quot;         &quot;xansm&quot;          
+##  [2,] &quot;william&quot;     &quot;nvolvng&quot;         &quot;william&quot;     &quot;nvolvng&quot;        
+##  [3,] &quot;titles&quot;      &quot;orelgn&quot;          &quot;titles&quot;      &quot;orelgn&quot;         
+##  [4,] &quot;legislatlon&quot; &quot;admlnlstratlons&quot; &quot;legislatlon&quot; &quot;admlnlstratlons&quot;
+##  [5,] &quot;wilbur&quot;      &quot;drarkm&quot;          &quot;wilbur&quot;      &quot;drarkm&quot;         
+##  [6,] &quot;banking&quot;     &quot;jurlsdlctlon&quot;    &quot;banking&quot;     &quot;jurlsdlctlon&quot;   
+##  [7,] &quot;cou&quot;         &quot;unmedlately&quot;     &quot;cou&quot;         &quot;unmedlately&quot;    
+##  [8,] &quot;ncy&quot;         &quot;antlclpated&quot;     &quot;ncy&quot;         &quot;antlclpated&quot;    
+##  [9,] &quot;titles&quot;      &quot;drganlzed&quot;       &quot;titles&quot;      &quot;drganlzed&quot;      
+## [10,] &quot;u&quot;           &quot;prohlblt&quot;        &quot;u&quot;           &quot;prohlblt&quot;</code></pre>
 </div>
 <div id="save-all-needed-results" class="section level3">
-<h3>5. Save all needed results</h3>
+<h3>6. Save all needed results</h3>
 <pre class="r"><code>save(letter_count,file=&quot;../output/letter_count.Rdata&quot;)
 save(combine_count,file=&quot;../output/combine_count.Rdata&quot;)
 save(corrected_ts,file=&quot;../output/corrected_ts.Rdata&quot;)
-save(all_detected_errors,corrected_words_MLE,not_corrected_MLE,corrected_words_ELE,not_corrected_ELE,file=&quot;../output/correction_results.Rdata&quot;)</code></pre>
+save(corrected_context,file=&quot;../output/corrected_context.Rdata&quot;)
+save(all_detected_errors,corrected_words_MLE,not_corrected_MLE,corrected_words_ELE,not_corrected_ELE,file=&quot;../output/correction_results_without_context.Rdata&quot;)
+save(all_detected_errors,corrected_context_word_MLE,not_corrected_context_MLE,corrected_context_word_ELE,not_corrected_context_ELE,file=&quot;../output/correction_results_with_context.Rdata&quot;)</code></pre>
 </div>
 </div>
 
