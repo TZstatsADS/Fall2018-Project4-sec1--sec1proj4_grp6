@@ -17,3 +17,4 @@ Summary: In this project, we created an OCR post-processing procedure to enhance
   + Chuqiao Rong: Error correction using papaer C4
   + Yang Xing: Error correction using papaer C4
   + Yi Lin: README files and presentation slides 
+  + Han Liu: Helping prepare the presentation slides and debugging
